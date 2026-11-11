@@ -622,8 +622,7 @@ function fit(el){el=el||els[cur];if(!el)return;const w=el.firstElementChild;if(!
  st.transform='translate('+(cw-tw)/2+'px,'+Math.max(0,(avail-h)/2)+'px) scale('+z.toFixed(3)+')'}
 addEventListener('resize',()=>fit());
 document.fonts&&document.fonts.ready.then(()=>fit());
-deck.addEventListener('click',()=>setTimeout(fit,120));
-deck.addEventListener('load',()=>fit(),true);
+deck.addEventListener('load',()=>{if(!document.querySelector('.slide.on.live.fitted'))fit()},true);
 size();start();go(fromHash(),true);
 })();
 </script>
