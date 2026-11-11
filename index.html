@@ -595,7 +595,7 @@ addEventListener('hashchange',()=>go(fromHash(),true));
 /* ---------- partículas ---------- */
 const cv=$('#bg'),cx=cv.getContext('2d');let W=0,H=0,ps=[],mx=-9999,my=-9999,rgbC=[143,180,255],tgt=[143,180,255],run=false;
 function size(){const d=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);
- const n=Math.round(Math.max(24,Math.min(96,W*H/15000)));ps=Array.from({length:n},(_,i)=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.36,vy:(Math.random()-.5)*.36,r:1+Math.random()*1.8,k:i%6}));if(RM)frame()}
+ const n=Math.round(Math.max(24,Math.min(96,W*H/15000)));ps=Array.from({length:n},(_,i)=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.36,vy:(Math.random()-.5)*.36,r:1+Math.random()*1.8,k:i%6}));}
 function frame(){for(let i=0;i<3;i++)rgbC[i]+=(tgt[i]-rgbC[i])*.05;const c=a=>'rgba('+(rgbC[0]|0)+','+(rgbC[1]|0)+','+(rgbC[2]|0)+','+a+')';
  cx.clearRect(0,0,W,H);
  for(const p of ps){const dx=p.x-mx,dy=p.y-my,d2=dx*dx+dy*dy;if(d2<32400){const d=Math.sqrt(d2)||1,f=(180-d)/180*.7;p.x+=dx/d*f;p.y+=dy/d*f}
@@ -608,7 +608,7 @@ function frame(){for(let i=0;i<3;i++)rgbC[i]+=(tgt[i]-rgbC[i])*.05;const c=a=>'r
   if(p.k===0){cx.strokeStyle=c(.35);cx.beginPath();cx.arc(p.x,p.y,p.r+5,0,6.283);cx.stroke()}
   else if(p.k===1){cx.strokeStyle=c(.3);cx.strokeRect(p.x-5,p.y-5,10,10)}}
  if(run)requestAnimationFrame(frame)}
-function start(){if(RM||run||document.hidden)return;run=true;requestAnimationFrame(frame)}
+function start(){if(run||document.hidden)return;run=true;requestAnimationFrame(frame)}
 addEventListener('resize',size);addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY},{passive:true});
 document.addEventListener('pointerleave',()=>{mx=my=-9999});document.addEventListener('visibilitychange',()=>{if(document.hidden)run=false;else start()});
 
