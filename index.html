@@ -18,6 +18,7 @@
 }
 @property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
 *{box-sizing:border-box}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:calc(15px*var(--k))/1.55 var(--f-body);display:flex;flex-direction:column;overflow:hidden}
 a{color:var(--ac)} button{font:inherit;color:inherit;cursor:pointer}
@@ -35,7 +36,8 @@ a{color:var(--ac)} button{font:inherit;color:inherit;cursor:pointer}
 
 /* palco */
 #deck{position:relative;z-index:1;flex:1;min-height:0}
-.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:grid;opacity:0;visibility:hidden;transform:translateX(calc(var(--from,1)*70px)) scale(.965);transition:opacity .55s var(--ease),transform .7s var(--ease),visibility 0s .7s;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:grid;opacity:0;visibility:hidden;transform:translateX(calc(var(--from,1)*70px)) scale(.965);transition:opacity .55s var(--ease),transform .7s var(--ease),visibility 0s .7s;scrollbar-width:none}
+.slide::-webkit-scrollbar{display:none}
 .slide.on{opacity:1;visibility:visible;transform:none;transition:opacity .6s var(--ease),transform .75s var(--ease),visibility 0s}
 .wrap{width:100%;max-width:1320px;margin:auto;padding-block:16px 24px;display:flex;flex-direction:column;gap:16px}
 .kick{margin:0;display:flex;align-items:center;gap:8px;font:500 calc(12px*var(--k)) var(--f-mono);color:var(--mut)}
@@ -249,6 +251,7 @@ kbd{padding:1px 8px;border:1px solid var(--line2);border-radius:4px;font:inherit
 
 </head>
 <body>
+<canvas id="bg" aria-hidden="true"></canvas>
 <header class="top gut">
   <span class="brand"><i></i>Horizonte 2031</span>
   <span class="mod" id="mod"></span>
@@ -567,7 +570,7 @@ function countUp(el){$$('[data-n]',el).forEach(b=>{const v=+b.dataset.n,d=+b.dat
 function go(n,silent){n=Math.max(0,Math.min(S.length-1,n));if(n===cur)return;const dir=n>cur?1:-1,old=els[cur],el=els[n],m=M[S[n].m];
  if(old){old.style.setProperty('--from',-dir);old.classList.remove('on','live');old.setAttribute('aria-hidden','true');old.inert=true}
  el.style.transition='none';el.style.setProperty('--from',dir);void el.offsetWidth;el.style.transition='';
- el.classList.add('on');el.removeAttribute('aria-hidden');el.inert=false;el.scrollTop=0;cur=n;
+ el.classList.add('on');el.removeAttribute('aria-hidden');el.inert=false;el.scrollTop=0;cur=n;fit(el);setTimeout(()=>fit(el),400);setTimeout(()=>fit(el),1500);
  const rgb=hex(m.c);document.body.style.setProperty('--ac',m.c);document.body.style.setProperty('--acr',rgb.join(','));tgt=rgb;
  $('#mod').textContent='Módulo '+(S[n].m+1)+' · '+m.n;$('#cnt').textContent=String(n+1).padStart(2,'0')+' / '+S.length;$('#mini').textContent=m.n+' · '+(n+1)+'/'+S.length;
  $('#prog').style.width=((n+1)/S.length*100)+'%';$('#prev').disabled=n===0;$('#next').disabled=n===S.length-1;
@@ -589,8 +592,37 @@ let tx=0,ty=0;deck.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=
 deck.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.8)go(cur+(dx<0?1:-1))},{passive:true});
 addEventListener('hashchange',()=>go(fromHash(),true));
 
-let tgt=null;
-go(fromHash(),true);
+/* ---------- partículas ---------- */
+const cv=$('#bg'),cx=cv.getContext('2d');let W=0,H=0,ps=[],mx=-9999,my=-9999,rgbC=[143,180,255],tgt=[143,180,255],run=false;
+function size(){const d=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);
+ const n=Math.round(Math.max(24,Math.min(96,W*H/15000)));ps=Array.from({length:n},(_,i)=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.36,vy:(Math.random()-.5)*.36,r:1+Math.random()*1.8,k:i%6}));if(RM)frame()}
+function frame(){for(let i=0;i<3;i++)rgbC[i]+=(tgt[i]-rgbC[i])*.05;const c=a=>'rgba('+(rgbC[0]|0)+','+(rgbC[1]|0)+','+(rgbC[2]|0)+','+a+')';
+ cx.clearRect(0,0,W,H);
+ for(const p of ps){const dx=p.x-mx,dy=p.y-my,d2=dx*dx+dy*dy;if(d2<32400){const d=Math.sqrt(d2)||1,f=(180-d)/180*.7;p.x+=dx/d*f;p.y+=dy/d*f}
+  p.x+=p.vx;p.y+=p.vy;if(p.x<-20)p.x=W+20;else if(p.x>W+20)p.x=-20;if(p.y<-20)p.y=H+20;else if(p.y>H+20)p.y=-20}
+ cx.lineWidth=1;
+ for(let i=0;i<ps.length;i++){const a=ps[i];
+  for(let j=i+1;j<ps.length;j++){const b=ps[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2<16900){cx.strokeStyle=c((1-d2/16900)*.16);cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke()}}
+  const mdx=a.x-mx,mdy=a.y-my,m2=mdx*mdx+mdy*mdy;if(m2<40000){cx.strokeStyle=c((1-m2/40000)*.45);cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(mx,my);cx.stroke()}}
+ for(const p of ps){cx.fillStyle=c(.55);cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.283);cx.fill();
+  if(p.k===0){cx.strokeStyle=c(.35);cx.beginPath();cx.arc(p.x,p.y,p.r+5,0,6.283);cx.stroke()}
+  else if(p.k===1){cx.strokeStyle=c(.3);cx.strokeRect(p.x-5,p.y-5,10,10)}}
+ if(run)requestAnimationFrame(frame)}
+function start(){if(RM||run||document.hidden)return;run=true;requestAnimationFrame(frame)}
+addEventListener('resize',size);addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY},{passive:true});
+document.addEventListener('pointerleave',()=>{mx=my=-9999});document.addEventListener('visibilitychange',()=>{if(document.hidden)run=false;else start()});
+
+/* ---------- ajuste à tela: sem barra de rolagem ---------- */
+function fit(el){el=el||els[cur];if(!el)return;const w=el.firstElementChild;if(!w)return;
+ w.style.transform='';w.style.transformOrigin='50% 0';el.style.overflowY='';
+ if(innerWidth<=900)return;
+ const avail=el.clientHeight,h=w.offsetHeight;if(!avail||!h||h<=avail)return;
+ el.style.overflowY='hidden';const z=Math.max(.5,(avail-4)/h);w.style.transform='translateY('+Math.max(0,(avail-h*z)/2)+'px) scale('+z.toFixed(4)+')'}
+addEventListener('resize',()=>fit());
+document.fonts&&document.fonts.ready.then(()=>fit());
+deck.addEventListener('click',()=>setTimeout(fit,120));
+deck.addEventListener('load',()=>fit(),true);
+size();start();go(fromHash(),true);
 })();
 </script>
 
